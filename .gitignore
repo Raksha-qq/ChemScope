@@ -1,0 +1,12 @@
+ChemScope/
+├── .gitignore             ← CREATE THIS ONE
+│
+├── backend/
+│   └── .venv/
+│
+└── frontend/
+    ├── .gitignore         ← KEEP THIS ONE
+    ├── node_modules/
+    ├── public/
+    ├── src/
+    └── package.json
