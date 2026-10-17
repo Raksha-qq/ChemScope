@@ -1,4 +1,4 @@
-
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
 import httpx
 
@@ -8,6 +8,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=False,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def home():
@@ -28,7 +35,7 @@ async def get_compound(name: str):
         "https://pubchem.ncbi.nlm.nih.gov/rest/pug/"
         f"compound/name/{name}/property/"
         "MolecularFormula,MolecularWeight,"
-        "IUPACName,CanonicalSMILES/JSON"
+          "IUPACName,ConnectivitySMILES/JSON"
     )
 
     try:
@@ -45,8 +52,10 @@ async def get_compound(name: str):
         data = response.json()
 
         properties = data["PropertyTable"]["Properties"][0]
+        properties["CanonicalSMILES"]=properties.get(
+            "ConnectivitySMILES"
+        )
         return properties
-
     except HTTPException:
         raise
 
