@@ -1,6 +1,7 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
+import MoleculeViewer from "./MoleculeViewer";
 
 const API = "http://localhost:8000";
 
@@ -47,11 +48,22 @@ function structureUrl(cid) {
 }
 
 function App() {
-  const [query, setQuery] = useState("caffeine");
+  const [query, setQuery] = useState("");
   const [compound, setCompound] = useState(null);
   const [recent, setRecent] = useState(starterCompounds);
-  const [favorites, setFavorites] = useState([]);
+
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const savedFavorites = localStorage.getItem("chemscope-favorites");
+      return savedFavorites ? JSON.parse(savedFavorites) : [];
+    } catch (error) {
+      console.error("Could not load favorites:", error);
+      return [];
+    }
+  });
+  const suppressSuggestions = useRef(false);
   const [loading, setLoading] = useState(false);
+  const [searchActive, setSearchActive] = useState(false);
   const [error, setError] = useState("");
   const [view, setView] = useState("2D");
   const [activeTab, setActiveTab] = useState("Discover");
@@ -62,9 +74,15 @@ function App() {
 
 
   useEffect(() => {
+    if (suppressSuggestions.current) {
+      return;
+    }
     const trimmedQuery = query.trim();
 
-    if (trimmedQuery.length < 2) {
+    if (trimmedQuery.length < 2 || searchActive) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setSearchingSuggestions(false);
       return;
     }
 
@@ -107,7 +125,7 @@ function App() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query]);
+  }, [query, searchActive]);
 
 
   // Search PubChem for a compound.
@@ -122,13 +140,17 @@ function App() {
       setError("Enter a compound name to begin.");
       return;
     }
+    suppressSuggestions.current = true;
 
     setQuery(name);
     setShowSuggestions(false);
+    setSuggestions([]);
+    setSearchActive(true);
     setLoading(true);
     setError("");
     setCompound(null);
-
+    setShowSuggestions(false);
+    setSuggestions([]);
     try {
       const response = await fetch(
         `${API}/api/compounds/${encodeURIComponent(name)}`
@@ -162,6 +184,7 @@ function App() {
       );
     } finally {
       setLoading(false);
+      setSearchActive(false);
     }
   }
 
@@ -174,6 +197,17 @@ function App() {
     );
   }
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "chemscope-favorites",
+        JSON.stringify(favorites)
+      );
+    } catch (error) {
+      console.error("Could not save favorites:", error);
+    }
+  }, [favorites]);
+
   const selected = compound
     ? {
       cid: compound.CID,
@@ -182,6 +216,92 @@ function App() {
       mass: Number(compound.MolecularWeight).toFixed(2),
     }
     : starterCompounds[0];
+
+
+  // Convert real PubChem properties into comparable 0–1 chart values.
+  const radarAxes = [
+    {
+      key: "XLogP",
+      label: "LIPOPHILICITY",
+      min: -2,
+      max: 8,
+    },
+    {
+      key: "MolecularWeight",
+      label: "SIZE",
+      min: 0,
+      max: 500,
+    },
+    {
+      key: "TPSA",
+      label: "POLARITY",
+      min: 0,
+      max: 200,
+    },
+    {
+      key: "RotatableBondCount",
+      label: "FLEXIBILITY",
+      min: 0,
+      max: 15,
+    },
+    {
+      key: "HBondDonorCount",
+      label: "DONORS",
+      min: 0,
+      max: 10,
+    },
+    {
+      key: "HBondAcceptorCount",
+      label: "ACCEPTORS",
+      min: 0,
+      max: 15,
+    },
+  ];
+
+  const radarDataAvailable =
+    compound &&
+    radarAxes.every(
+      (axis) =>
+        compound[axis.key] !== null &&
+        compound[axis.key] !== undefined &&
+        Number.isFinite(Number(compound[axis.key]))
+    );
+
+  const radarPoints = radarDataAvailable
+    ? radarAxes.map((axis, index) => {
+      const rawValue = Number(compound[axis.key]);
+      const normalized = Math.max(
+        0,
+        Math.min(1, (rawValue - axis.min) / (axis.max - axis.min))
+      );
+
+      const angle = ((index * 60 - 90) * Math.PI) / 180;
+      const radius = normalized * 62;
+
+      return {
+        ...axis,
+        rawValue,
+        x: 120 + radius * Math.cos(angle),
+        y: 87 + radius * Math.sin(angle),
+      };
+    })
+    : [];
+
+  const radarPolygon = radarPoints
+    .map((point) => `${point.x},${point.y}`)
+    .join(" ");
+
+  const formatProperty = (value, digits = 2) => {
+    if (value === null || value === undefined || value === "") {
+      return "—";
+    }
+
+    const number = Number(value);
+
+    return Number.isFinite(number)
+      ? number.toFixed(digits)
+      : "—";
+  };
 
   const shownCompounds =
     activeTab === "Favorites" ? favorites : recent;
@@ -263,13 +383,16 @@ function App() {
             <form
               className="search-form"
               onSubmit={(event) => {
+                event.preventDefault();
                 setShowSuggestions(false);
-                searchCompound(event);
+                setSuggestions([]);
+                searchCompound(null);
               }}
             >
               <input
                 value={query}
                 onChange={(event) => {
+                  suppressSuggestions.current = false;
                   setQuery(event.target.value);
                   setError("");
                 }}
@@ -344,45 +467,78 @@ function App() {
 
           {error && <p className="error-message">{error}</p>}
 
-          <div className="structure-preview">
+
+          <div className="structure-preview compound-details">
             <div className="mini-heading">
-              <span>◇</span> Molecular structure
+              <span>◇</span> Compound details
             </div>
 
-            {compound?.CanonicalSMILES ||
-              compound?.ConnectivitySMILES ? (
-              <p className="smiles-preview">
-                {compound.CanonicalSMILES ||
-                  compound.ConnectivitySMILES}
-              </p>
-            ) : (
-              <p className="smiles-preview">
-                Search for a compound to load its structure.
-              </p>
-            )}
+            <div className="detail-item">
+              <span>Compound name</span>
+              <strong>{selected.name}</strong>
+            </div>
 
-            <img
-              src={structureUrl(selected.cid)}
-              alt={`${selected.name} molecular structure`}
-              className="structure-image small-structure"
-              onError={(event) => {
-                event.currentTarget.style.visibility = "hidden";
-              }}
-            />
+            <div className="detail-item">
+              <span>Molecular formula</span>
+              <strong>{selected.formula || "—"}</strong>
+            </div>
+
+            <div className="detail-item">
+              <span>Molecular weight</span>
+              <strong>
+                {selected.mass ? `${selected.mass} g/mol` : "—"}
+              </strong>
+            </div>
+
+            <div className="detail-item">
+              <span>PubChem CID</span>
+              <strong>{selected.cid || "—"}</strong>
+            </div>
+
+            <div className="detail-item smiles-detail">
+              <span>Canonical SMILES</span>
+
+              {compound?.CanonicalSMILES ||
+                compound?.ConnectivitySMILES ? (
+                <button
+                  type="button"
+                  className="smiles-copy"
+                  title="Copy SMILES"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      compound.CanonicalSMILES ||
+                      compound.ConnectivitySMILES
+                    );
+                  }}
+                >
+                  Copy SMILES <span>↗</span>
+                </button>
+              ) : (
+                <strong className="muted-value">
+                  Search a compound to load its SMILES
+                </strong>
+              )}
+            </div>
           </div>
+
         </aside>
+
 
         <section className="central-molecule">
           <div className="orb-label">
             <span className="live-dot" /> MOLECULAR EXPLORER
           </div>
 
-          <img
-            key={selected.cid}
-            src={structureUrl(selected.cid)}
-            alt={`${selected.name} 2D chemical structure`}
-            className="structure-image hero-structure"
-          />
+          {view === "3D" ? (
+            <MoleculeViewer cid={selected.cid} />
+          ) : (
+            <img
+              key={selected.cid}
+              src={structureUrl(selected.cid)}
+              alt={`${selected.name} 2D chemical structure`}
+              className="structure-image hero-structure"
+            />
+          )}
 
           <div className="molecule-name">
             <span>ACTIVE COMPOUND</span>
@@ -392,6 +548,7 @@ function App() {
             </p>
           </div>
         </section>
+
 
         <aside className="analysis-panel glass-panel">
           <div className="view-switch">
@@ -418,11 +575,16 @@ function App() {
             <span>♧</span> Molecular profile
           </div>
 
+
           <div className="radar-wrap">
             <svg
               viewBox="0 0 240 190"
               role="img"
-              aria-label="Illustrative molecular profile chart"
+              aria-label={
+                radarDataAvailable
+                  ? `Molecular profile for ${query}`
+                  : "Molecular profile chart awaiting compound data"
+              }
             >
               <g className="radar-grid">
                 <polygon points="120,25 174,56 174,118 120,149 66,118 66,56" />
@@ -433,19 +595,29 @@ function App() {
                 <line x1="174" y1="56" x2="66" y2="118" />
               </g>
 
-              <polygon
-                className="radar-area"
-                points="120,48 155,75 145,101 120,119 91,103 92,72"
-              />
+              {radarDataAvailable && (
+                <>
+                  <polygon
+                    className="radar-area"
+                    points={radarPolygon}
+                  />
 
-              <g className="radar-points">
-                <circle cx="120" cy="48" r="3" />
-                <circle cx="155" cy="75" r="3" />
-                <circle cx="145" cy="101" r="3" />
-                <circle cx="120" cy="119" r="3" />
-                <circle cx="91" cy="103" r="3" />
-                <circle cx="92" cy="72" r="3" />
-              </g>
+                  <g className="radar-points">
+                    {radarPoints.map((point) => (
+                      <circle
+                        key={point.key}
+                        cx={point.x}
+                        cy={point.y}
+                        r="3"
+                      >
+                        <title>
+                          {point.label}: {point.rawValue}
+                        </title>
+                      </circle>
+                    ))}
+                  </g>
+                </>
+              )}
 
               <g className="radar-labels">
                 <text x="120" y="14" textAnchor="middle">
@@ -463,6 +635,13 @@ function App() {
           </div>
 
           <p className="chart-note">
+            {radarDataAvailable
+              ? "Real PubChem properties · normalized for display"
+              : "Search a compound to load its molecular profile"}
+          </p>
+
+
+          <p className="chart-note">
             Illustrative profile · not measured data
           </p>
 
@@ -478,6 +657,39 @@ function App() {
               <div className="data-row">
                 <span>Molar mass</span>
                 <strong>{selected.mass}</strong>
+              </div>
+
+              <div className="data-row">
+                <span>XLogP</span>
+                <strong>{formatProperty(compound?.XLogP)}</strong>
+              </div>
+
+              <div className="data-row">
+                <span>Polar surface area</span>
+                <strong>
+                  {formatProperty(compound?.TPSA)} Å²
+                </strong>
+              </div>
+
+              <div className="data-row">
+                <span>H-bond donors</span>
+                <strong>
+                  {formatProperty(compound?.HBondDonorCount, 0)}
+                </strong>
+              </div>
+
+              <div className="data-row">
+                <span>H-bond acceptors</span>
+                <strong>
+                  {formatProperty(compound?.HBondAcceptorCount, 0)}
+                </strong>
+              </div>
+
+              <div className="data-row">
+                <span>Rotatable bonds</span>
+                <strong>
+                  {formatProperty(compound?.RotatableBondCount, 0)}
+                </strong>
               </div>
 
               <div className="data-row">
@@ -511,12 +723,6 @@ function App() {
             </div>
           </div>
 
-          {view === "3D" && (
-            <p className="view-notice">
-              A true interactive 3D molecular viewer will be added next.
-              This view currently uses the 2D structure.
-            </p>
-          )}
         </aside>
       </section>
 

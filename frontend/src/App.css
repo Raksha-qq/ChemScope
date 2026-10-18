@@ -982,3 +982,104 @@ a:focus-visible {
   color: #9bb7ae;
   font-size: 0.85rem;
 }
+
+/* Interactive 3D molecular viewer */
+.molecule-viewer-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  overflow: hidden;
+  border: 1px solid rgba(73, 240, 198, 0.2);
+  border-radius: 14px;
+  background: #0b1110;
+}
+
+.molecule-viewer-canvas {
+  width: 100%;
+  height: 320px;
+}
+
+.molecule-viewer-message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #49f0c6;
+  text-align: center;
+  pointer-events: none;
+}
+
+.viewer-error {
+  color: #ff9c9c;
+}
+
+.viewer-hint {
+  margin: 0;
+  padding: 10px 14px;
+  color: #9bb7ae;
+  font-size: 0.8rem;
+  text-align: center;
+  border-top: 1px solid rgba(73, 240, 198, 0.12);
+}
+
+/* Compound details panel */
+.compound-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.compound-details .mini-heading {
+  margin-bottom: 20px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(130, 190, 190, 0.12);
+  min-width: 0;
+}
+
+.detail-item>span {
+  color: #87aaa9;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.detail-item>strong {
+  color: #e0eeee;
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.detail-item .muted-value {
+  color: #789392;
+  font-size: 12px;
+}
+
+.smiles-detail {
+  border-bottom: none;
+  margin-top: 5px;
+}
+
+.smiles-copy {
+  align-self: flex-start;
+  padding: 8px 12px;
+  border: 1px solid rgba(69, 220, 191, 0.35);
+  border-radius: 8px;
+  background: rgba(69, 220, 191, 0.07);
+  color: #55e2c3;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.smiles-copy:hover {
+  background: rgba(69, 220, 191, 0.15);
+}

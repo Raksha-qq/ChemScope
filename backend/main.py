@@ -77,13 +77,25 @@ async def search_compounds(query: str):
             detail="Could not connect to PubChem."
         )
 
+
 @app.get("/api/compounds/{name}")
 async def get_compound(name: str):
+    properties_to_fetch = (
+        "MolecularFormula,"
+        "MolecularWeight,"
+        "IUPACName,"
+        "ConnectivitySMILES,"
+        "XLogP,"
+        "TPSA,"
+        "HBondDonorCount,"
+        "HBondAcceptorCount,"
+        "RotatableBondCount"
+    )
+
     url = (
         "https://pubchem.ncbi.nlm.nih.gov/rest/pug/"
         f"compound/name/{name}/property/"
-        "MolecularFormula,MolecularWeight,"
-          "IUPACName,ConnectivitySMILES/JSON"
+        f"{properties_to_fetch}/JSON"
     )
 
     try:
@@ -100,10 +112,14 @@ async def get_compound(name: str):
         data = response.json()
 
         properties = data["PropertyTable"]["Properties"][0]
-        properties["CanonicalSMILES"]=properties.get(
+
+        # Preserve your existing SMILES field.
+        properties["CanonicalSMILES"] = properties.get(
             "ConnectivitySMILES"
         )
+
         return properties
+
     except HTTPException:
         raise
 
