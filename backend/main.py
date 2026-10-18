@@ -27,7 +27,55 @@ def health_check():
         "status": "healthy",
         "application": "ChemScope"
     }
+@app.get("/api/search/{query}")
+async def search_compounds(query: str):
+    query = query.strip()
 
+    if len(query) < 2:
+        return {"suggestions": []}
+
+    url = (
+        "https://pubchem.ncbi.nlm.nih.gov/"
+        f"rest/autocomplete/compound/{query}/json"
+    )
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                url,
+                params={"limit": 8}
+            )
+
+        if response.status_code == 404:
+            return {"suggestions": []}
+
+        response.raise_for_status()
+        data = response.json()
+
+        suggestions = (
+            data.get("dictionary_terms", {})
+            .get("compound", [])
+        )
+
+        return {"suggestions": suggestions[:8]}
+
+    except httpx.TimeoutException:
+        raise HTTPException(
+            status_code=504,
+            detail="PubChem took too long to respond."
+        )
+
+    except httpx.HTTPStatusError:
+        raise HTTPException(
+            status_code=502,
+            detail="Could not retrieve suggestions from PubChem."
+        )
+
+    except httpx.RequestError:
+        raise HTTPException(
+            status_code=502,
+            detail="Could not connect to PubChem."
+        )
 
 @app.get("/api/compounds/{name}")
 async def get_compound(name: str):
