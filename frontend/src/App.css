@@ -43,13 +43,22 @@ a:focus-visible {
 
 .dashboard {
   min-height: 100vh;
+  width: 100%;
+  max-width: none;
+  margin: 0;
   overflow: hidden;
   position: relative;
   padding-bottom: 12px;
+  box-sizing: border-box;
+
   background-image:
     linear-gradient(rgba(65, 154, 147, 0.055) 1px, transparent 1px),
     linear-gradient(90deg, rgba(65, 154, 147, 0.055) 1px, transparent 1px),
-    radial-gradient(ellipse at 50% 52%, #09251f 0%, #061218 37%, #03090d 75%);
+    radial-gradient(ellipse at 50% 52%,
+      #09251f 0%,
+      #061218 37%,
+      #03090d 75%);
+
   background-size: 25px 25px, 25px 25px, auto;
 }
 
@@ -165,6 +174,8 @@ a:focus-visible {
   gap: 22px;
   align-items: start;
   padding: 30px 3% 22px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .glass-panel {
@@ -1082,4 +1093,61 @@ a:focus-visible {
 
 .smiles-copy:hover {
   background: rgba(69, 220, 191, 0.15);
+}
+
+/* Wider dashboard on desktop */
+@media (min-width: 1500px) {
+  .dashboard {
+    max-width: 1800px;
+  }
+
+  .workspace {
+    grid-template-columns:
+      minmax(280px, 0.9fr) minmax(400px, 1.4fr) minmax(340px, 1fr);
+  }
+}
+
+/* Prevent horizontal overflow on smaller screens */
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .search-panel,
+  .central-molecule,
+  .analysis-panel {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+}
+
+.empty-molecule {
+  min-height: 360px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.empty-molecule-symbol {
+  font-size: 72px;
+  color: #43e7c0;
+  opacity: 0.7;
+  margin-bottom: 20px;
+}
+
+.empty-molecule h1 {
+  color: #d9eeee;
+  font-size: clamp(22px, 2.2vw, 32px);
+  margin: 0 0 12px;
+}
+
+.empty-molecule p {
+  color: #83a6a6;
+  font-size: 13px;
+  line-height: 1.7;
 }

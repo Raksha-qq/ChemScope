@@ -147,6 +147,10 @@ function App() {
     setSuggestions([]);
     setSearchActive(true);
     setLoading(true);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
     setError("");
     setCompound(null);
     setShowSuggestions(false);
@@ -208,6 +212,7 @@ function App() {
     }
   }, [favorites]);
 
+
   const selected = compound
     ? {
       cid: compound.CID,
@@ -215,8 +220,7 @@ function App() {
       formula: compound.MolecularFormula,
       mass: Number(compound.MolecularWeight).toFixed(2),
     }
-    : starterCompounds[0];
-
+    : null;
 
   // Convert real PubChem properties into comparable 0–1 chart values.
   const radarAxes = [
@@ -468,60 +472,65 @@ function App() {
           {error && <p className="error-message">{error}</p>}
 
 
-          <div className="structure-preview compound-details">
-            <div className="mini-heading">
-              <span>◇</span> Compound details
+
+          {selected ? (
+            <div className="structure-preview compound-details">
+              <div className="mini-heading">
+                <span>◇</span> Compound details
+              </div>
+
+              <div className="detail-item">
+                <span>Compound name</span>
+                <strong>{selected.name}</strong>
+              </div>
+
+              <div className="detail-item">
+                <span>Molecular formula</span>
+                <strong>{selected.formula || "—"}</strong>
+              </div>
+
+              <div className="detail-item">
+                <span>Molecular weight</span>
+                <strong>{selected.mass || "—"} g/mol</strong>
+              </div>
+
+              <div className="detail-item">
+                <span>PubChem CID</span>
+                <strong>{selected.cid || "—"}</strong>
+              </div>
+
+              <div className="detail-item smiles-detail">
+                <span>Canonical SMILES</span>
+                {compound?.CanonicalSMILES || compound?.ConnectivitySMILES ? (
+                  <button
+                    type="button"
+                    className="smiles-copy"
+                    onClick={() =>
+                      navigator.clipboard.writeText(
+                        compound.CanonicalSMILES ||
+                        compound.ConnectivitySMILES
+                      )
+                    }
+                  >
+                    Copy SMILES ↗
+                  </button>
+                ) : (
+                  <strong className="muted-value">Not available</strong>
+                )}
+              </div>
             </div>
-
-            <div className="detail-item">
-              <span>Compound name</span>
-              <strong>{selected.name}</strong>
+          ) : (
+            <div className="structure-preview compound-details">
+              <div className="mini-heading">
+                <span>◇</span> Compound details
+              </div>
+              <p className="empty-detail">
+                Search for a compound to view its details.
+              </p>
             </div>
-
-            <div className="detail-item">
-              <span>Molecular formula</span>
-              <strong>{selected.formula || "—"}</strong>
-            </div>
-
-            <div className="detail-item">
-              <span>Molecular weight</span>
-              <strong>
-                {selected.mass ? `${selected.mass} g/mol` : "—"}
-              </strong>
-            </div>
-
-            <div className="detail-item">
-              <span>PubChem CID</span>
-              <strong>{selected.cid || "—"}</strong>
-            </div>
-
-            <div className="detail-item smiles-detail">
-              <span>Canonical SMILES</span>
-
-              {compound?.CanonicalSMILES ||
-                compound?.ConnectivitySMILES ? (
-                <button
-                  type="button"
-                  className="smiles-copy"
-                  title="Copy SMILES"
-                  onClick={() => {
-                    navigator.clipboard.writeText(
-                      compound.CanonicalSMILES ||
-                      compound.ConnectivitySMILES
-                    );
-                  }}
-                >
-                  Copy SMILES <span>↗</span>
-                </button>
-              ) : (
-                <strong className="muted-value">
-                  Search a compound to load its SMILES
-                </strong>
-              )}
-            </div>
-          </div>
-
+          )}
         </aside>
+
 
 
         <section className="central-molecule">
@@ -529,25 +538,38 @@ function App() {
             <span className="live-dot" /> MOLECULAR EXPLORER
           </div>
 
-          {view === "3D" ? (
-            <MoleculeViewer cid={selected.cid} />
-          ) : (
-            <img
-              key={selected.cid}
-              src={structureUrl(selected.cid)}
-              alt={`${selected.name} 2D chemical structure`}
-              className="structure-image hero-structure"
-            />
-          )}
+          {selected ? (
+            <>
+              {view === "3D" ? (
+                <MoleculeViewer cid={selected.cid} />
+              ) : (
+                <img
+                  key={selected.cid}
+                  src={structureUrl(selected.cid)}
+                  alt={`${selected.name} 2D chemical structure`}
+                  className="structure-image hero-structure"
+                />
+              )}
 
-          <div className="molecule-name">
-            <span>ACTIVE COMPOUND</span>
-            <h1>{compound ? query : "Caffeine"}</h1>
-            <p>
-              {selected.formula} <span>·</span> {selected.mass} g/mol
-            </p>
-          </div>
+              <div className="molecule-name">
+                <span>ACTIVE COMPOUND</span>
+                <h1>{selected.name}</h1>
+                <p>
+                  {selected.formula} <span>·</span> {selected.mass} g/mol
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="empty-molecule">
+              <span className="empty-molecule-symbol">⌬</span>
+              <h1>Your next discovery awaits.</h1>
+              <p>
+                Search for a compound to explore its molecular structure.
+              </p>
+            </div>
+          )}
         </section>
+
 
 
         <aside className="analysis-panel glass-panel">
@@ -634,95 +656,83 @@ function App() {
             </svg>
           </div>
 
-          <p className="chart-note">
-            {radarDataAvailable
-              ? "Real PubChem properties · normalized for display"
-              : "Search a compound to load its molecular profile"}
-          </p>
-
-
-          <p className="chart-note">
-            Illustrative profile · not measured data
-          </p>
-
           <div className="property-columns">
             <div>
               <h3><span>⚗</span> Physicochemical</h3>
 
               <div className="data-row">
                 <span>Formula</span>
-                <strong>{selected.formula}</strong>
+                <strong>{selected?.formula || "—"}</strong>
+
+                <div className="data-row">
+                  <span>Molar mass</span>
+                  <strong>{selected?.mass || "—"}</strong>
+                </div>
+
+                <div className="data-row">
+                  <span>XLogP</span>
+                  <strong>{formatProperty(compound?.XLogP)}</strong>
+                </div>
+
+                <div className="data-row">
+                  <span>Polar surface area</span>
+                  <strong>
+                    {formatProperty(compound?.TPSA)} Å²
+                  </strong>
+                </div>
+
+                <div className="data-row">
+                  <span>H-bond donors</span>
+                  <strong>
+                    {formatProperty(compound?.HBondDonorCount, 0)}
+                  </strong>
+                </div>
+
+                <div className="data-row">
+                  <span>H-bond acceptors</span>
+                  <strong>
+                    {formatProperty(compound?.HBondAcceptorCount, 0)}
+                  </strong>
+                </div>
+
+                <div className="data-row">
+                  <span>Rotatable bonds</span>
+                  <strong>
+                    {formatProperty(compound?.RotatableBondCount, 0)}
+                  </strong>
+                </div>
+
+                <div className="data-row">
+                  <span>SMILES</span>
+                  <strong>
+                    {compound?.CanonicalSMILES ||
+                      compound?.ConnectivitySMILES
+                      ? "Available"
+                      : "—"}
+                  </strong>
+                </div>
               </div>
 
-              <div className="data-row">
-                <span>Molar mass</span>
-                <strong>{selected.mass}</strong>
-              </div>
+              <div>
+                <h3><span>ⓘ</span> Compound details</h3>
 
-              <div className="data-row">
-                <span>XLogP</span>
-                <strong>{formatProperty(compound?.XLogP)}</strong>
-              </div>
+                <div className="data-row">
+                  <span>PubChem CID</span>
+                  <strong>{selected?.cid || "—"}</strong>
+                </div>
 
-              <div className="data-row">
-                <span>Polar surface area</span>
-                <strong>
-                  {formatProperty(compound?.TPSA)} Å²
-                </strong>
-              </div>
+                <div className="data-row">
+                  <span>Source</span>
+                  <strong>PubChem</strong>
+                </div>
 
-              <div className="data-row">
-                <span>H-bond donors</span>
-                <strong>
-                  {formatProperty(compound?.HBondDonorCount, 0)}
-                </strong>
-              </div>
-
-              <div className="data-row">
-                <span>H-bond acceptors</span>
-                <strong>
-                  {formatProperty(compound?.HBondAcceptorCount, 0)}
-                </strong>
-              </div>
-
-              <div className="data-row">
-                <span>Rotatable bonds</span>
-                <strong>
-                  {formatProperty(compound?.RotatableBondCount, 0)}
-                </strong>
-              </div>
-
-              <div className="data-row">
-                <span>SMILES</span>
-                <strong>
-                  {compound?.CanonicalSMILES ||
-                    compound?.ConnectivitySMILES
-                    ? "Available"
-                    : "—"}
-                </strong>
-              </div>
-            </div>
-
-            <div>
-              <h3><span>ⓘ</span> Compound details</h3>
-
-              <div className="data-row">
-                <span>PubChem CID</span>
-                <strong>{selected.cid}</strong>
-              </div>
-
-              <div className="data-row">
-                <span>Source</span>
-                <strong>PubChem</strong>
-              </div>
-
-              <div className="data-row">
-                <span>View</span>
-                <strong>{view}</strong>
+                <div className="data-row">
+                  <span>View</span>
+                  <strong>{view}</strong>
+                </div>
               </div>
             </div>
           </div>
-
         </aside>
       </section>
 
