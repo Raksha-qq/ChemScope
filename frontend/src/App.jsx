@@ -139,8 +139,9 @@ function App() {
       </header>
 
       <section className="workspace">
-        <div className="molecule-orb" />
-
+        <div className="molecule-orb" >
+          <div className="orbit-ring ring-three" />
+        </div>
         <aside className="search-panel glass-panel">
           <h2><span className="accent">⌕</span> Compound search</h2>
 

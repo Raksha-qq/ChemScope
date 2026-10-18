@@ -850,53 +850,38 @@ a:focus-visible {
   }
 }
 
-/* Keep the main sphere centered while its glow pulses */
+/* Main sphere glow pulse */
 .molecule-orb {
   animation: orb-pulse 7s ease-in-out infinite;
 }
 
-/* Orbital rings */
-.molecule-orb::before,
+/* Ring 1 — slow forward rotation */
+.molecule-orb::before {
+  content: "";
+  position: absolute;
+  inset: 15% -8%;
+  border: 1px solid rgba(73, 240, 198, 0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  transform-origin: center;
+  will-change: transform;
+  animation: chemscope-orbit 30s linear infinite;
+}
+
+/* Ring 2 — slow reverse rotation */
 .molecule-orb::after {
   content: "";
   position: absolute;
-  inset: 6%;
-  border: 1px solid rgba(31, 220, 166, 0.22);
+  inset: -8% 15%;
+  border: 1px solid rgba(73, 240, 198, 0.35);
   border-radius: 50%;
+  pointer-events: none;
   transform-origin: center;
   will-change: transform;
+  animation: chemscope-orbit-reverse 40s linear infinite;
 }
 
-/* First ring: tilted and continuously rotating */
-.molecule-orb::before {
-  animation: ring-one 12s linear infinite;
-}
-
-/* Second ring: a different tilt and reverse rotation */
-.molecule-orb::after {
-  animation: ring-two 18s linear infinite;
-}
-
-@keyframes ring-one {
-  from {
-    transform: rotateX(65deg) rotateZ(0deg);
-  }
-
-  to {
-    transform: rotateX(65deg) rotateZ(360deg);
-  }
-}
-
-@keyframes ring-two {
-  from {
-    transform: rotateY(65deg) rotateZ(360deg);
-  }
-
-  to {
-    transform: rotateY(65deg) rotateZ(0deg);
-  }
-}
-
+/* Subtle glow pulse */
 @keyframes orb-pulse {
 
   0%,
@@ -909,39 +894,7 @@ a:focus-visible {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-
-  .molecule-orb,
-  .molecule-orb::before,
-  .molecule-orb::after {
-    animation: none;
-  }
-}
-
-/* Two slow, continuous orbital rings */
-
-.molecule-orb::before,
-.molecule-orb::after {
-  content: "";
-  position: absolute;
-  inset: 15% -8%;
-  border: 1px solid rgba(73, 240, 198, 0.5);
-  border-radius: 50%;
-  transform-origin: center;
-  pointer-events: none;
-  will-change: transform;
-}
-
-.molecule-orb::before {
-  animation: chemscope-orbit 30s linear infinite !important;
-}
-
-.molecule-orb::after {
-  inset: -8% 15%;
-  border-color: rgba(73, 240, 198, 0.35);
-  animation: chemscope-orbit-reverse 40s linear infinite !important;
-}
-
+/* Ring 1 rotation */
 @keyframes chemscope-orbit {
   from {
     transform: rotate(0deg) scaleY(0.45);
@@ -952,6 +905,7 @@ a:focus-visible {
   }
 }
 
+/* Ring 2 reverse rotation */
 @keyframes chemscope-orbit-reverse {
   from {
     transform: rotate(360deg) scaleX(0.45);
@@ -959,5 +913,15 @@ a:focus-visible {
 
   to {
     transform: rotate(0deg) scaleX(0.45);
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+
+  .molecule-orb,
+  .molecule-orb::before,
+  .molecule-orb::after {
+    animation: none !important;
   }
 }
