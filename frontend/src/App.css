@@ -7,22 +7,32 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+
   --mint: #49f0c6;
   --mint-soft: #8af8dc;
   --muted: #92aebc;
   --line: rgba(103, 205, 196, 0.24);
   --panel: rgba(5, 20, 27, 0.91);
+  --page-bg: #030a0e;
+  --panel-bg: #06151b;
+  --error-text: #ffb4bb;
+  --error-bg: #391c26;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #030a0e;
+  background: var(--page-bg);
 }
 
 button,
@@ -41,54 +51,54 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
-.dashboard {
-  min-height: 100vh;
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  overflow: hidden;
-  position: relative;
-  padding-bottom: 12px;
-  box-sizing: border-box;
+img,
+canvas,
+svg {
+  max-width: 100%;
+}
 
+.dashboard {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding-bottom: 12px;
+  overflow: hidden;
   background-image:
     linear-gradient(rgba(65, 154, 147, 0.055) 1px, transparent 1px),
     linear-gradient(90deg, rgba(65, 154, 147, 0.055) 1px, transparent 1px),
-    radial-gradient(ellipse at 50% 52%,
-      #09251f 0%,
-      #061218 37%,
-      #03090d 75%);
-
+    radial-gradient(ellipse at 50% 52%, #09251f 0%, #061218 37%, #03090d 75%);
   background-size: 25px 25px, 25px 25px, auto;
 }
 
+/* Header and navigation */
 .topbar {
-  min-height: 70px;
+  position: relative;
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+  min-height: 70px;
   padding: 12px 3%;
   border-bottom: 1px solid rgba(107, 185, 182, 0.13);
   background: rgba(2, 8, 12, 0.94);
-  position: relative;
-  z-index: 5;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 7px;
-  text-decoration: none;
   color: #f1fffd;
   font-size: 24px;
   font-weight: 700;
+  text-decoration: none;
   white-space: nowrap;
 }
 
-.brand>span:last-child {
-  color: var(--mint);
+.brand > span:last-child {
   margin-left: -7px;
+  color: var(--mint);
 }
 
 .brand-symbol {
@@ -98,32 +108,33 @@ a:focus-visible {
 
 .navigation {
   display: flex;
+  align-self: stretch;
   justify-content: center;
   gap: 8px;
-  align-self: stretch;
+  min-width: 0;
 }
 
 .navigation button {
-  background: transparent;
+  padding: 8px 13px;
   border: 0;
   border-bottom: 2px solid transparent;
-  padding: 8px 13px;
+  background: transparent;
   color: #a8bbc6;
   cursor: pointer;
-  white-space: nowrap;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .navigation button span {
-  font-size: 20px;
   margin-right: 6px;
+  font-size: 20px;
   vertical-align: -2px;
 }
 
 .navigation button:hover,
 .navigation button.active {
-  color: var(--mint);
   border-bottom-color: var(--mint);
+  color: var(--mint);
 }
 
 .account {
@@ -146,13 +157,13 @@ a:focus-visible {
 
 .account-avatar {
   display: grid;
-  place-items: center;
   width: 34px;
   height: 34px;
-  border-radius: 50%;
+  place-items: center;
   border: 1px solid #4d858a;
-  color: var(--mint);
+  border-radius: 50%;
   background: #10242b;
+  color: var(--mint);
   font-size: 16px;
 }
 
@@ -162,64 +173,94 @@ a:focus-visible {
 }
 
 .account small {
-  color: var(--muted);
   margin-top: 3px;
+  color: var(--muted);
 }
 
-.workspace {
-  position: relative;
-  min-height: 570px;
-  display: grid;
-  grid-template-columns: minmax(240px, 0.95fr) minmax(250px, 1.55fr) minmax(290px, 1.15fr);
-  gap: 22px;
-  align-items: start;
-  padding: 30px 3% 22px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
+/* Shared panels and messages */
 .glass-panel {
   position: relative;
   z-index: 2;
-  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 16px;
+  background: var(--panel);
   box-shadow: inset 0 1px rgba(255, 255, 255, 0.025);
   backdrop-filter: blur(16px);
 }
 
+.error-message {
+  overflow-wrap: anywhere;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--error-bg);
+  color: var(--error-text);
+  font-size: 12px;
+}
+
+.empty-state {
+  align-self: center;
+  padding: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tiny-note {
+  font-size: 10px !important;
+}
+
+/* Main workspace */
+.workspace {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.55fr) minmax(0, 1.15fr);
+  align-items: start;
+  gap: 22px;
+  width: 100%;
+  min-height: 570px;
+  padding: 30px 3% 22px;
+}
+
 .search-panel {
+  min-width: 0;
   padding: 19px 16px;
 }
 
 .search-panel h2,
 .gallery-intro h2 {
+  margin: 0 0 19px;
   font-size: 16px;
   font-weight: 600;
-  margin: 0 0 19px;
 }
 
 .accent,
-.section-heading>span {
-  color: var(--mint);
+.section-heading > span {
   margin-right: 8px;
+  color: var(--mint);
   font-size: 21px;
+}
+
+.search-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  min-width: 0;
 }
 
 .search-form {
   display: flex;
   gap: 6px;
+  min-width: 0;
 }
 
 .search-form input {
-  min-width: 0;
   width: 100%;
-  background: #06151b;
+  min-width: 0;
+  padding: 13px 12px;
   border: 1px solid #35606a;
   border-radius: 9px;
-  padding: 13px 12px;
-  color: #f1fffd;
   outline: none;
+  background: var(--panel-bg);
+  color: #f1fffd;
 }
 
 .search-form input:focus {
@@ -236,48 +277,40 @@ a:focus-visible {
   cursor: pointer;
 }
 
-.search-form button:disabled {
+.search-form button:disabled,
+.compare-form button:disabled {
   opacity: 0.6;
   cursor: wait;
 }
 
 .panel-caption {
+  margin: 17px 0;
   color: #73949e;
   font: 9px 'Space Mono', monospace;
   letter-spacing: 0.5px;
-  margin: 17px 0;
-}
-
-.error-message {
-  color: #ffb4bb;
-  background: #391c26;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 12px;
-  overflow-wrap: anywhere;
 }
 
 .structure-preview {
-  border: 1px solid #234650;
-  background: rgba(5, 23, 29, 0.7);
-  border-radius: 12px;
   padding: 13px;
+  border: 1px solid #234650;
+  border-radius: 12px;
+  background: rgba(5, 23, 29, 0.7);
 }
 
 .mini-heading {
-  font-size: 12px;
   color: #d9efeb;
+  font-size: 12px;
 }
 
 .mini-heading span {
-  color: var(--mint);
   margin-right: 7px;
+  color: var(--mint);
 }
 
 .smiles-preview {
-  font: 10px/1.6 'Space Mono', monospace;
-  color: #9bc7c7;
   overflow-wrap: anywhere;
+  color: #9bc7c7;
+  font: 10px/1.6 'Space Mono', monospace;
 }
 
 .structure-image {
@@ -287,55 +320,146 @@ a:focus-visible {
 }
 
 .small-structure {
+  display: block;
   width: 100%;
   height: 135px;
-  display: block;
 }
 
+/* Autocomplete */
+.suggestions-dropdown {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid rgba(73, 240, 198, 0.25);
+  border-radius: 12px;
+  background: #101a19;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #e5f5ef;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.suggestion-item:hover,
+.suggestion-item:focus-visible {
+  outline: none;
+  background: rgba(73, 240, 198, 0.1);
+  color: var(--mint);
+}
+
+.suggestion-icon {
+  color: var(--mint);
+}
+
+.suggestion-status {
+  margin: 6px 0;
+  padding: 6px 0;
+  color: #91b8aa;
+  font-size: 12px;
+}
+
+/* Decorative molecule orb and central molecule */
 .molecule-orb {
   position: absolute;
   z-index: 0;
+  top: 25px;
+  left: 50%;
   width: min(49vw, 570px);
   aspect-ratio: 1;
-  border-radius: 50%;
-  left: 50%;
-  top: 25px;
+  overflow: visible;
   transform: translateX(-50%);
+  border: 1px solid rgba(23, 212, 157, 0.12);
+  border-radius: 50%;
   background:
     radial-gradient(circle at 50% 50%, rgba(13, 71, 58, 0.14), transparent 56%),
     radial-gradient(circle, transparent 56%, rgba(21, 218, 157, 0.09) 57%, transparent 59%);
-  border: 1px solid rgba(23, 212, 157, 0.12);
   box-shadow:
     0 0 70px rgba(0, 231, 166, 0.08),
     inset 0 0 70px rgba(0, 231, 166, 0.06);
   pointer-events: none;
-  overflow: visible;
   perspective: 800px;
+  animation: orb-pulse 7s ease-in-out infinite;
 }
 
 .molecule-orb::before,
 .molecule-orb::after {
-  content: "";
   position: absolute;
-  inset: 6%;
-  border: 1px solid rgba(31, 220, 166, 0.11);
+  content: '';
+  inset: 15% -8%;
+  border: 1px solid rgba(73, 240, 198, 0.5);
   border-radius: 50%;
-  transform: rotateX(65deg);
+  pointer-events: none;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.molecule-orb::before {
+  animation: chemscope-orbit 30s linear infinite;
 }
 
 .molecule-orb::after {
-  transform: rotateY(65deg);
+  inset: -8% 15%;
+  border-color: rgba(73, 240, 198, 0.35);
+  animation: chemscope-orbit-reverse 40s linear infinite;
+}
+
+@keyframes orb-pulse {
+  0%,
+  100% {
+    filter: brightness(0.85);
+  }
+
+  50% {
+    filter: brightness(1.3);
+  }
+}
+
+@keyframes chemscope-orbit {
+  from {
+    transform: rotate(0deg) scaleY(0.45);
+  }
+
+  to {
+    transform: rotate(360deg) scaleY(0.45);
+  }
+}
+
+@keyframes chemscope-orbit-reverse {
+  from {
+    transform: rotate(360deg) scaleX(0.45);
+  }
+
+  to {
+    transform: rotate(0deg) scaleX(0.45);
+  }
 }
 
 .central-molecule {
-  z-index: 1;
   position: relative;
-  min-width: 0;
-  min-height: 450px;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-width: 0;
+  min-height: 450px;
   padding: 25px 0;
 }
 
@@ -354,41 +478,43 @@ a:focus-visible {
 
 .hero-structure {
   width: 100%;
-  height: 330px;
   max-width: 390px;
+  height: 330px;
   padding: 10px;
   filter: invert(1) hue-rotate(125deg) drop-shadow(0 0 12px rgba(55, 255, 203, 0.18));
 }
 
 .molecule-name {
-  text-align: center;
   margin-top: 2px;
+  text-align: center;
 }
 
-.molecule-name>span {
+.molecule-name > span {
   color: #71b6a6;
   font: 9px 'Space Mono', monospace;
   letter-spacing: 2px;
 }
 
 .molecule-name h1 {
-  font-size: clamp(19px, 2vw, 28px);
   margin: 8px 0;
+  font-size: clamp(19px, 2vw, 28px);
   text-transform: capitalize;
 }
 
 .molecule-name p {
+  margin: 0;
   color: #9ab6c3;
   font: 12px 'Space Mono', monospace;
-  margin: 0;
 }
 
 .molecule-name p span {
-  color: var(--mint);
   margin: 0 6px;
+  color: var(--mint);
 }
 
+/* Analysis panel and property chart */
 .analysis-panel {
+  min-width: 0;
   padding: 13px 15px 17px;
 }
 
@@ -396,6 +522,7 @@ a:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
 }
@@ -424,8 +551,8 @@ a:focus-visible {
 }
 
 .edit-label {
-  font-size: 11px;
   color: #9cb6c2;
+  font-size: 11px;
 }
 
 .section-heading {
@@ -440,8 +567,8 @@ a:focus-visible {
 }
 
 .radar-wrap svg {
-  width: 100%;
   display: block;
+  width: 100%;
   overflow: visible;
 }
 
@@ -468,32 +595,32 @@ a:focus-visible {
 }
 
 .chart-note {
-  text-align: center;
+  margin: -3px 0 15px;
   color: #6f939d;
   font-size: 9px;
-  margin: -3px 0 15px;
+  text-align: center;
 }
 
 .property-columns {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 13px;
 }
 
-.property-columns>div+div {
-  border-left: 1px solid var(--line);
+.property-columns > div + div {
   padding-left: 12px;
+  border-left: 1px solid var(--line);
 }
 
 .property-columns h3 {
-  font-size: 11px;
   margin: 0 0 10px;
+  font-size: 11px;
   white-space: nowrap;
 }
 
 .property-columns h3 span {
-  color: var(--mint);
   margin-right: 5px;
+  color: var(--mint);
 }
 
 .data-row {
@@ -510,8 +637,8 @@ a:focus-visible {
 }
 
 .data-row strong {
-  font-weight: 500;
   overflow-wrap: anywhere;
+  font-weight: 500;
 }
 
 .view-notice {
@@ -524,14 +651,15 @@ a:focus-visible {
   line-height: 1.6;
 }
 
+/* Compound discoveries and cards */
 .discoveries {
-  z-index: 2;
   position: relative;
-  margin: 0 3%;
-  padding: 13px;
+  z-index: 2;
   display: grid;
   grid-template-columns: 205px minmax(0, 1fr);
   gap: 14px;
+  margin: 0 3%;
+  padding: 13px;
 }
 
 .gallery-intro {
@@ -544,15 +672,15 @@ a:focus-visible {
 }
 
 .gallery-intro p {
+  color: #96b2c1;
   font-size: 11px;
   line-height: 1.7;
-  color: #96b2c1;
 }
 
 .outline-button {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-top: 20px;
   padding: 10px 13px;
@@ -569,15 +697,15 @@ a:focus-visible {
 }
 
 .compound-gallery {
-  min-width: 0;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
+  min-width: 0;
 }
 
 .compound-tile {
-  min-width: 0;
   position: relative;
+  min-width: 0;
   border: 1px solid #23434d;
   border-radius: 10px;
   background: rgba(4, 19, 25, 0.76);
@@ -585,8 +713,8 @@ a:focus-visible {
 }
 
 .compound-tile:hover {
-  border-color: var(--mint);
   transform: translateY(-2px);
+  border-color: var(--mint);
 }
 
 .compound-tile:has(.favorited) {
@@ -596,13 +724,13 @@ a:focus-visible {
 .favorite-button {
   position: absolute;
   z-index: 1;
-  right: 9px;
   top: 7px;
-  background: transparent;
+  right: 9px;
   border: 0;
+  background: transparent;
   color: #a9c8d2;
-  font-size: 18px;
   cursor: pointer;
+  font-size: 18px;
 }
 
 .favorite-button.favorited {
@@ -627,22 +755,22 @@ a:focus-visible {
 }
 
 .tile-content h3 {
-  font-size: 12px;
-  margin: 0 0 5px;
-  text-transform: capitalize;
   overflow-wrap: anywhere;
+  margin: 0 0 5px;
+  font-size: 12px;
+  text-transform: capitalize;
 }
 
 .tile-formula {
-  font: 10px 'Space Mono', monospace;
-  color: #91c3cb;
   margin: 0 0 7px;
+  color: #91c3cb;
+  font: 10px 'Space Mono', monospace;
 }
 
 .tile-detail {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
+  justify-content: space-between;
   gap: 5px;
   padding: 5px 0;
   border-top: 1px solid rgba(97, 153, 163, 0.17);
@@ -654,9 +782,9 @@ a:focus-visible {
 }
 
 .tile-detail strong {
-  text-align: right;
-  font-weight: 500;
   overflow-wrap: anywhere;
+  font-weight: 500;
+  text-align: right;
 }
 
 .compound-tag {
@@ -669,329 +797,35 @@ a:focus-visible {
   font-size: 9px;
 }
 
-.empty-state {
-  color: var(--muted);
-  font-size: 12px;
-  align-self: center;
-  padding: 12px;
-}
-
-.tiny-note {
-  font-size: 10px !important;
-}
-
-.dashboard-footer {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  color: #5e858d;
-  font: 9px 'Space Mono', monospace;
-  letter-spacing: 1.3px;
-  padding: 16px 8px 5px;
-}
-
-.dashboard-footer span {
-  color: var(--mint);
-}
-
-@media (min-width: 1500px) {
-  .workspace {
-    min-height: 610px;
-  }
-
-  .central-molecule {
-    min-height: 500px;
-  }
-
-  .hero-structure {
-    height: 380px;
-  }
-
-  .discoveries {
-    padding: 16px;
-  }
-
-  .tile-structure {
-    height: 100px;
-  }
-}
-
-@media (max-width: 1100px) {
-  .topbar {
-    flex-wrap: wrap;
-  }
-
-  .workspace {
-    grid-template-columns: minmax(220px, 0.8fr) minmax(220px, 1.2fr);
-  }
-
-  .central-molecule {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .analysis-panel {
-    grid-column: 1 / -1;
-    display: block;
-  }
-
-  .radar-wrap {
-    max-width: 240px;
-  }
-
-  .property-columns {
-    max-width: 650px;
-    margin: 0 auto;
-  }
-
-  .molecule-orb {
-    width: 55vw;
-    top: 30px;
-    left: 63%;
-  }
-
-  .discoveries {
-    grid-template-columns: 1fr;
-  }
-
-  .gallery-intro {
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 15px;
-  }
-
-  .outline-button {
-    margin-top: 10px;
-  }
-}
-
-@media (max-width: 700px) {
-  .topbar {
-    gap: 12px;
-    padding: 12px 16px;
-  }
-
-  .brand {
-    font-size: 21px;
-  }
-
-  .navigation {
-    order: 3;
-    width: 100%;
-    overflow-x: auto;
-    justify-content: flex-start;
-  }
-
-  .navigation button {
-    padding: 9px;
-  }
-
-  .account {
-    margin-left: auto;
-  }
-
-  .account>div,
-  .account .status-dot {
-    display: none;
-  }
-
-  .workspace {
-    display: flex;
-    flex-direction: column;
-    padding: 22px 16px;
-    gap: 18px;
-  }
-
-  .search-panel,
-  .analysis-panel {
-    width: 100%;
-  }
-
-  .central-molecule {
-    width: 100%;
-    min-height: 340px;
-    order: 2;
-  }
-
-  .search-panel {
-    order: 1;
-  }
-
-  .analysis-panel {
-    order: 3;
-  }
-
-  .hero-structure {
-    height: 245px;
-  }
-
-  .molecule-orb {
-    width: 95vw;
-    top: 270px;
-    left: 50%;
-  }
-
-  .discoveries {
-    margin: 0 16px;
-    padding: 12px;
-  }
-
-  .compound-gallery {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .tile-structure {
-    height: 100px;
-  }
-}
-
-@media (max-width: 380px) {
-  .property-columns {
-    grid-template-columns: 1fr;
-  }
-
-  .property-columns>div+div {
-    border-left: 0;
-    border-top: 1px solid var(--line);
-    padding: 12px 0 0;
-  }
-
-  .compound-gallery {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Main sphere glow pulse */
-.molecule-orb {
-  animation: orb-pulse 7s ease-in-out infinite;
-}
-
-/* Ring 1 — slow forward rotation */
-.molecule-orb::before {
-  content: "";
-  position: absolute;
-  inset: 15% -8%;
-  border: 1px solid rgba(73, 240, 198, 0.5);
-  border-radius: 50%;
-  pointer-events: none;
-  transform-origin: center;
-  will-change: transform;
-  animation: chemscope-orbit 30s linear infinite;
-}
-
-/* Ring 2 — slow reverse rotation */
-.molecule-orb::after {
-  content: "";
-  position: absolute;
-  inset: -8% 15%;
-  border: 1px solid rgba(73, 240, 198, 0.35);
-  border-radius: 50%;
-  pointer-events: none;
-  transform-origin: center;
-  will-change: transform;
-  animation: chemscope-orbit-reverse 40s linear infinite;
-}
-
-/* Subtle glow pulse */
-@keyframes orb-pulse {
-
-  0%,
-  100% {
-    filter: brightness(0.85);
-  }
-
-  50% {
-    filter: brightness(1.3);
-  }
-}
-
-/* Ring 1 rotation */
-@keyframes chemscope-orbit {
-  from {
-    transform: rotate(0deg) scaleY(0.45);
-  }
-
-  to {
-    transform: rotate(360deg) scaleY(0.45);
-  }
-}
-
-/* Ring 2 reverse rotation */
-@keyframes chemscope-orbit-reverse {
-  from {
-    transform: rotate(360deg) scaleX(0.45);
-  }
-
-  to {
-    transform: rotate(0deg) scaleX(0.45);
-  }
-}
-
-/* Respect reduced-motion preferences */
-@media (prefers-reduced-motion: reduce) {
-
-  .molecule-orb,
-  .molecule-orb::before,
-  .molecule-orb::after {
-    animation: none !important;
-  }
-}
-
-/* Autocomplete search container */
-.search-container {
-  position: relative;
-  width: 100%;
-  z-index: 10;
-}
-
-/* Suggestions dropdown */
-.suggestions-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  right: 0;
-  max-height: 260px;
-  overflow-y: auto;
-  z-index: 100;
-  padding: 6px;
-  border: 1px solid rgba(73, 240, 198, 0.25);
-  border-radius: 12px;
-  background: #101a19;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
-}
-
-/* Individual suggestion */
-.suggestion-item {
+/* Empty home state */
+.empty-molecule {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: #e5f5ef;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  transition: background 0.2s ease, color 0.2s ease;
+  justify-content: center;
+  min-height: 360px;
+  padding: 24px;
+  box-sizing: border-box;
+  text-align: center;
 }
 
-.suggestion-item:hover,
-.suggestion-item:focus-visible {
-  background: rgba(73, 240, 198, 0.1);
-  color: #49f0c6;
-  outline: none;
+.empty-molecule-symbol {
+  margin-bottom: 20px;
+  color: #43e7c0;
+  font-size: 72px;
+  opacity: 0.7;
 }
 
-.suggestion-icon {
-  color: #49f0c6;
+.empty-molecule h1 {
+  margin: 0 0 12px;
+  color: #d9eeee;
+  font-size: clamp(22px, 2.2vw, 32px);
 }
 
-.suggestion-status {
-  padding: 12px;
-  color: #9bb7ae;
-  font-size: 0.85rem;
+.empty-molecule p {
+  color: #83a6a6;
+  font-size: 13px;
+  line-height: 1.7;
 }
 
 /* Interactive 3D molecular viewer */
@@ -1017,7 +851,7 @@ a:focus-visible {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  color: #49f0c6;
+  color: var(--mint);
   text-align: center;
   pointer-events: none;
 }
@@ -1029,13 +863,13 @@ a:focus-visible {
 .viewer-hint {
   margin: 0;
   padding: 10px 14px;
+  border-top: 1px solid rgba(73, 240, 198, 0.12);
   color: #9bb7ae;
   font-size: 0.8rem;
   text-align: center;
-  border-top: 1px solid rgba(73, 240, 198, 0.12);
 }
 
-/* Compound details panel */
+/* Compound detail rows */
 .compound-details {
   display: flex;
   flex-direction: column;
@@ -1050,23 +884,23 @@ a:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
   padding: 13px 0;
   border-bottom: 1px solid rgba(130, 190, 190, 0.12);
-  min-width: 0;
 }
 
-.detail-item>span {
+.detail-item > span {
   color: #87aaa9;
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
-.detail-item>strong {
+.detail-item > strong {
+  overflow-wrap: anywhere;
   color: #e0eeee;
   font-size: 14px;
   font-weight: 500;
-  overflow-wrap: anywhere;
 }
 
 .detail-item .muted-value {
@@ -1075,8 +909,8 @@ a:focus-visible {
 }
 
 .smiles-detail {
-  border-bottom: none;
   margin-top: 5px;
+  border-bottom: none;
 }
 
 .smiles-copy {
@@ -1086,8 +920,8 @@ a:focus-visible {
   border-radius: 8px;
   background: rgba(69, 220, 191, 0.07);
   color: #55e2c3;
-  font-size: 12px;
   cursor: pointer;
+  font-size: 12px;
   transition: background 0.2s ease;
 }
 
@@ -1095,79 +929,21 @@ a:focus-visible {
   background: rgba(69, 220, 191, 0.15);
 }
 
-/* Wider dashboard on desktop */
-@media (min-width: 1500px) {
-  .dashboard {
-    max-width: 1800px;
-  }
-
-  .workspace {
-    grid-template-columns:
-      minmax(280px, 0.9fr) minmax(400px, 1.4fr) minmax(340px, 1fr);
-  }
-}
-
-/* Prevent horizontal overflow on smaller screens */
-@media (max-width: 1100px) {
-  .workspace {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .search-panel,
-  .central-molecule,
-  .analysis-panel {
-    width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-  }
-}
-
-.empty-molecule {
-  min-height: 360px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  box-sizing: border-box;
-}
-
-.empty-molecule-symbol {
-  font-size: 72px;
-  color: #43e7c0;
-  opacity: 0.7;
-  margin-bottom: 20px;
-}
-
-.empty-molecule h1 {
-  color: #d9eeee;
-  font-size: clamp(22px, 2.2vw, 32px);
-  margin: 0 0 12px;
-}
-
-.empty-molecule p {
-  color: #83a6a6;
-  font-size: 13px;
-  line-height: 1.7;
-}
-
 /* Compound comparison */
-
 .compare-panel {
+  min-height: 420px;
   margin: 30px 3%;
   padding: 30px;
   border-radius: 20px;
-  min-height: 420px;
   box-sizing: border-box;
 }
 
 .compare-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 20px;
+  justify-content: space-between;
   flex-wrap: wrap;
+  gap: 20px;
   margin-bottom: 28px;
 }
 
@@ -1183,15 +959,17 @@ a:focus-visible {
 .compare-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 18px;
   align-items: end;
+  gap: 18px;
   margin-bottom: 24px;
 }
 
 .compare-form label {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
   color: #b8c9c3;
   font-size: 13px;
 }
@@ -1199,7 +977,6 @@ a:focus-visible {
 .compare-form input {
   width: 100%;
   min-width: 0;
-  box-sizing: border-box;
   padding: 13px;
   border: 1px solid #344b43;
   border-radius: 10px;
@@ -1219,15 +996,43 @@ a:focus-visible {
   cursor: pointer;
 }
 
-.compare-form button:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
 .compare-symbol {
+  padding-bottom: 8px;
   color: #65e5b2;
   font-size: 26px;
-  padding-bottom: 8px;
+}
+
+.compare-suggestions {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid rgba(80, 220, 170, 0.25);
+  border-radius: 12px;
+  background: #101b19;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.compare-suggestions button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #e5f5ef;
+  cursor: pointer;
+  text-align: left;
+}
+
+.compare-suggestions button:hover,
+.compare-suggestions button:focus-visible {
+  outline: none;
+  background: rgba(80, 220, 170, 0.12);
 }
 
 .comparison-compounds {
@@ -1242,17 +1047,17 @@ a:focus-visible {
   padding: 20px;
   border: 1px solid #2b4239;
   border-radius: 14px;
-  text-align: center;
   background: rgba(15, 30, 24, 0.65);
+  text-align: center;
 }
 
 .comparison-compound img {
   width: 100%;
   max-width: 240px;
   height: 150px;
-  object-fit: contain;
-  background: white;
   border-radius: 10px;
+  background: white;
+  object-fit: contain;
 }
 
 .comparison-compound h2 {
@@ -1262,9 +1067,9 @@ a:focus-visible {
 
 .comparison-compound p,
 .comparison-compound span {
+  overflow-wrap: anywhere;
   color: #9daaa7;
   font-size: 13px;
-  overflow-wrap: anywhere;
 }
 
 .comparison-table-wrap {
@@ -1299,7 +1104,184 @@ a:focus-visible {
   color: #9daaa7;
 }
 
-@media (max-width: 650px) {
+/* Footer */
+.dashboard-footer {
+  position: relative;
+  z-index: 1;
+  padding: 16px 8px 5px;
+  color: #5e858d;
+  font: 9px 'Space Mono', monospace;
+  letter-spacing: 1.3px;
+  text-align: center;
+}
+
+.dashboard-footer span {
+  color: var(--mint);
+}
+
+/* Large screens */
+@media (min-width: 1500px) {
+  .dashboard {
+    max-width: 1800px;
+  }
+
+  .workspace {
+    min-height: 610px;
+    grid-template-columns: minmax(280px, 0.9fr) minmax(400px, 1.4fr) minmax(340px, 1fr);
+  }
+
+  .central-molecule {
+    min-height: 500px;
+  }
+
+  .hero-structure {
+    height: 380px;
+  }
+
+  .discoveries {
+    padding: 16px;
+  }
+
+  .tile-structure {
+    height: 100px;
+  }
+}
+
+/* Tablet and compact desktop */
+@media (max-width: 1100px) {
+  .topbar {
+    flex-wrap: wrap;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .search-panel,
+  .central-molecule,
+  .analysis-panel {
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .radar-wrap {
+    max-width: 240px;
+  }
+
+  .property-columns {
+    max-width: 650px;
+    margin: 0 auto;
+  }
+
+  .molecule-orb {
+    top: 30px;
+    left: 63%;
+    width: 55vw;
+  }
+
+  .discoveries {
+    grid-template-columns: 1fr;
+  }
+
+  .gallery-intro {
+    padding-bottom: 15px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .outline-button {
+    margin-top: 10px;
+  }
+
+  .compound-gallery {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  .topbar {
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .brand {
+    font-size: 21px;
+  }
+
+  .navigation {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+
+  .navigation button {
+    padding: 9px;
+  }
+
+  .account {
+    margin-left: auto;
+  }
+
+  .account > div,
+  .account .status-dot {
+    display: none;
+  }
+
+  .workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 22px 16px;
+  }
+
+  .search-panel,
+  .central-molecule,
+  .analysis-panel {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .search-panel {
+    order: 1;
+  }
+
+  .central-molecule {
+    order: 2;
+    min-height: 340px;
+  }
+
+  .analysis-panel {
+    order: 3;
+  }
+
+  .hero-structure {
+    height: 245px;
+  }
+
+  .molecule-orb {
+    top: 270px;
+    left: 50%;
+    width: 95vw;
+  }
+
+  .discoveries {
+    margin: 0 16px;
+    padding: 12px;
+  }
+
+  .compound-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tile-structure {
+    height: 100px;
+  }
+
   .compare-panel {
     margin: 18px 12px;
     padding: 18px;
@@ -1313,12 +1295,12 @@ a:focus-visible {
     display: none;
   }
 
-  .comparison-compounds {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .compare-form button {
     grid-column: 1;
+  }
+
+  .comparison-compounds {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .comparison-table th,
@@ -1328,72 +1310,36 @@ a:focus-visible {
   }
 }
 
-.compare-form label {
-  position: relative;
-  min-width: 0;
+/* Very narrow mobile */
+@media (max-width: 380px) {
+  .property-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .property-columns > div + div {
+    padding: 12px 0 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .compound-gallery {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .switch-group button {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
 }
 
-.compare-suggestions {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  z-index: 100;
-  max-height: 220px;
-  overflow-y: auto;
-  padding: 6px;
-  border: 1px solid rgba(80, 220, 170, 0.25);
-  border-radius: 12px;
-  background: #101b19;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-}
-
-.compare-suggestions button {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 12px;
-  border: none;
-  border-radius: 7px;
-  background: transparent;
-  color: #e5f5ef;
-  text-align: left;
-  cursor: pointer;
-}
-
-.compare-suggestions button:hover {
-  background: rgba(80, 220, 170, 0.12);
-}
-
-.suggestion-status {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 101;
-  margin: 0;
-  padding: 6px 0;
-  color: #91b8aa;
-  font-size: 12px;
-}
-
-.compare-suggestions button {
-  display: block;
-  width: 100%;
-  padding: 10px 12px;
-  border: none;
-  border-radius: 7px;
-  background: transparent;
-  color: #e5f5ef;
-  text-align: left;
-  cursor: pointer;
-}
-
-.compare-suggestions button:hover {
-  background: rgba(80, 220, 170, 0.12);
-}
-
-.suggestion-status {
-  margin: 6px 0;
-  color: #91b8aa;
-  font-size: 12px;
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
