@@ -122,10 +122,9 @@ function App() {
     }
     const trimmedQuery = query.trim();
 
+    // State cleanup is handled by the input/search event handlers.
+    // This effect only starts a request when the query is eligible.
     if (trimmedQuery.length < 2 || searchActive) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      setSearchingSuggestions(false);
       return;
     }
 
@@ -173,10 +172,8 @@ function App() {
     const text = compareNameA.trim();
 
     // Only fetch suggestions while this input's dropdown is open.
+    // Input handlers clear the dropdown when the query becomes too short.
     if (!showCompareSuggestionsA || text.length < 2) {
-      setCompareSuggestionsA([]);
-      setShowCompareSuggestionsA(false);
-      setLoadingSuggestionsA(false);
       return;
     }
 
@@ -218,10 +215,8 @@ function App() {
     const text = compareNameB.trim();
 
     // Only fetch suggestions while this input's dropdown is open.
+    // Input handlers clear the dropdown when the query becomes too short.
     if (!showCompareSuggestionsB || text.length < 2) {
-      setCompareSuggestionsB([]);
-      setShowCompareSuggestionsB(false);
-      setLoadingSuggestionsB(false);
       return;
     }
 
@@ -674,8 +669,14 @@ function App() {
                 value={query}
                 onChange={(event) => {
                   suppressSuggestions.current = false;
-                  setQuery(event.target.value);
+                  const nextQuery = event.target.value;
+                  setQuery(nextQuery);
                   setError("");
+                  if (nextQuery.trim().length < 2) {
+                    setSuggestions([]);
+                    setShowSuggestions(false);
+                    setSearchingSuggestions(false);
+                  }
                 }}
                 onFocus={() => {
                   if (query.trim().length >= 2) {
@@ -1046,10 +1047,17 @@ function App() {
                   }
                 }}
                 onChange={(event) => {
-                  setCompareNameA(event.target.value);
+                  const nextName = event.target.value;
+                  setCompareNameA(nextName);
                   setCompareA(null);
                   setCompareError("");
-                  setShowCompareSuggestionsA(true);
+                  if (nextName.trim().length < 2) {
+                    setCompareSuggestionsA([]);
+                    setShowCompareSuggestionsA(false);
+                    setLoadingSuggestionsA(false);
+                  } else {
+                    setShowCompareSuggestionsA(true);
+                  }
                 }}
                 placeholder="e.g. Caffeine"
               />
@@ -1095,10 +1103,17 @@ function App() {
                   }
                 }}
                 onChange={(event) => {
-                  setCompareNameB(event.target.value);
+                  const nextName = event.target.value;
+                  setCompareNameB(nextName);
                   setCompareB(null);
                   setCompareError("");
-                  setShowCompareSuggestionsB(true);
+                  if (nextName.trim().length < 2) {
+                    setCompareSuggestionsB([]);
+                    setShowCompareSuggestionsB(false);
+                    setLoadingSuggestionsB(false);
+                  } else {
+                    setShowCompareSuggestionsB(true);
+                  }
                 }}
                 placeholder="e.g. Aspirin"
               />
