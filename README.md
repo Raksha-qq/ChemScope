@@ -119,7 +119,7 @@ Activate the virtual environment.
 Install the backend dependencies:
 
 ```bash
-pip install "fastapi[standard]" httpx
+pip install -r requirements.txt
 ```
 
 Start the backend server:
@@ -142,6 +142,8 @@ Open a second terminal and navigate to the frontend directory from the project r
 ```bash
 cd frontend
 npm install
+# frontend/.env.local
+VITE_API_URL=http://localhost:8000
 npm run dev
 ```
 
@@ -201,7 +203,7 @@ You can explore and test these endpoints using the interactive API documentation
 
 ## License
 
-This project is distributed under the MIT License, as indicated by the project's license configuration. See the repository's license file for the full terms.
+No license has been specified yet.
 
 ---
 
