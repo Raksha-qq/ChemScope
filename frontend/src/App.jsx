@@ -67,11 +67,54 @@ function App() {
   const [error, setError] = useState("");
   const [view, setView] = useState("2D");
   const [activeTab, setActiveTab] = useState("Discover");
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareA, setCompareA] = useState(null);
+  const [compareB, setCompareB] = useState(null);
+  const [compareLoading, setCompareLoading] = useState(false);
+  const [compareError, setCompareError] = useState("");
+  const [compareNameA, setCompareNameA] = useState("");
+  const [compareNameB, setCompareNameB] = useState("");
+  const [compareSuggestionsA, setCompareSuggestionsA] = useState([]);
+  const [compareSuggestionsB, setCompareSuggestionsB] = useState([]);
 
+  const [showCompareSuggestionsA, setShowCompareSuggestionsA] = useState(false);
+  const [showCompareSuggestionsB, setShowCompareSuggestionsB] = useState(false);
+
+  const [loadingSuggestionsA, setLoadingSuggestionsA] = useState(false);
+  const [loadingSuggestionsB, setLoadingSuggestionsB] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchingSuggestions, setSearchingSuggestions] = useState(false);
 
+  // Navigate between the main workspace and the compound collections.
+  function navigateTo(tab) {
+    setCompareMode(false);
+    setActiveTab(tab);
+
+    if (tab === "Discover") {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+      setCompound(null);
+      setQuery("");
+      setError("");
+      setShowSuggestions(false);
+      setSuggestions([]);
+      suppressSuggestions.current = false;
+    }
+  }
+
+
+  // Move the viewport to the compound gallery when a collection is selected.
+  useEffect(() => {
+    if (!compareMode && (activeTab === "Recommended" || activeTab === "Favorites")) {
+      document.querySelector(".discoveries")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [activeTab, compareMode]);
 
   useEffect(() => {
     if (suppressSuggestions.current) {
@@ -126,7 +169,95 @@ function App() {
       controller.abort();
     };
   }, [query, searchActive]);
+  useEffect(() => {
+    const text = compareNameA.trim();
 
+    // Only fetch suggestions while this input's dropdown is open.
+    if (!showCompareSuggestionsA || text.length < 2) {
+      setCompareSuggestionsA([]);
+      setShowCompareSuggestionsA(false);
+      setLoadingSuggestionsA(false);
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+
+    const timer = setTimeout(async () => {
+      setLoadingSuggestionsA(true);
+
+      try {
+        const response = await fetch(
+          `${API}/api/search/${encodeURIComponent(text)}`,
+          { signal: controller.signal }
+        );
+
+        const data = await response.json();
+
+        if (active && response.ok) {
+          setCompareSuggestionsA(data.suggestions || []);
+          setShowCompareSuggestionsA(true);
+        }
+      } catch (error) {
+        if (error.name !== "AbortError" && active) {
+          setCompareSuggestionsA([]);
+        }
+      } finally {
+        if (active) setLoadingSuggestionsA(false);
+      }
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [compareNameA, showCompareSuggestionsA]);
+
+  useEffect(() => {
+    const text = compareNameB.trim();
+
+    // Only fetch suggestions while this input's dropdown is open.
+    if (!showCompareSuggestionsB || text.length < 2) {
+      setCompareSuggestionsB([]);
+      setShowCompareSuggestionsB(false);
+      setLoadingSuggestionsB(false);
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+
+    const timer = setTimeout(async () => {
+      setLoadingSuggestionsB(true);
+
+      try {
+        const response = await fetch(
+          `${API}/api/search/${encodeURIComponent(text)}`,
+          { signal: controller.signal }
+        );
+
+        const data = await response.json();
+
+        if (active && response.ok) {
+          setCompareSuggestionsB(data.suggestions || []);
+          setShowCompareSuggestionsB(true);
+        }
+      } catch (error) {
+        if (error.name !== "AbortError" && active) {
+          setCompareSuggestionsB([]);
+        }
+      } finally {
+        if (active) setLoadingSuggestionsB(false);
+      }
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [compareNameB, showCompareSuggestionsB]);
 
   // Search PubChem for a compound.
   async function searchCompound(event, selectedName) {
@@ -140,6 +271,9 @@ function App() {
       setError("Enter a compound name to begin.");
       return;
     }
+
+    setCompareMode(false);
+    setActiveTab("Discover");
     suppressSuggestions.current = true;
 
     setQuery(name);
@@ -191,7 +325,55 @@ function App() {
       setSearchActive(false);
     }
   }
+  async function compareCompounds(nameA, nameB) {
+    if (!nameA.trim() || !nameB.trim()) {
+      setCompareError("Please enter both compound names.");
+      return;
+    }
 
+    if (nameA.trim().toLowerCase() === nameB.trim().toLowerCase()) {
+      setCompareError("Choose two different compounds to compare.");
+      return;
+    }
+
+    setCompareLoading(true);
+    setCompareError("");
+    setCompareA(null);
+    setCompareB(null);
+
+    try {
+      const [responseA, responseB] = await Promise.all([
+        fetch(`${API}/api/compounds/${encodeURIComponent(nameA.trim())}`),
+        fetch(`${API}/api/compounds/${encodeURIComponent(nameB.trim())}`),
+      ]);
+
+      const dataA = await responseA.json();
+      const dataB = await responseB.json();
+
+      if (!responseA.ok) {
+        throw new Error(`Compound A: ${dataA.detail || "Not found."}`);
+      }
+
+      if (!responseB.ok) {
+        throw new Error(`Compound B: ${dataB.detail || "Not found."}`);
+      }
+
+      if (dataA.CID === dataB.CID) {
+        throw new Error("These names resolve to the same compound.");
+      }
+
+      setCompareA(dataA);
+      setCompareB(dataB);
+    } catch (err) {
+      setCompareError(
+        err.message === "Failed to fetch"
+          ? "Cannot reach the backend. Check that FastAPI is running."
+          : err.message
+      );
+    } finally {
+      setCompareLoading(false);
+    }
+  }
   // Add or remove a compound from favorites.
   function toggleFavorite(item) {
     setFavorites((previous) =>
@@ -307,8 +489,90 @@ function App() {
       : "—";
   };
 
+  // Export report data as a CSV file or a print-ready PDF report.
+  function downloadCsv(filename, rows) {
+    const escapeCsv = (value) => {
+      const text = value === null || value === undefined || value === "" ? "—" : String(value);
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+    const csv = rows.map((row) => row.map(escapeCsv).join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function printPdfReport(title, rows) {
+    const printWindow = window.open("", "_blank", "width=900,height=700");
+    if (!printWindow) {
+      window.alert("Your browser blocked the report window. Allow pop-ups for this site and try again.");
+      return;
+    }
+    const escapeHtml = (value) => String(value ?? "—").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    })[char]);
+    const tableRows = rows.map((row, index) =>
+      `<tr>${row.map((cell) => `<${index === 0 ? "th" : "td"}>${escapeHtml(cell)}</${index === 0 ? "th" : "td"}>`).join("")}</tr>`
+    ).join("");
+    printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"/><title>${escapeHtml(title)}</title>
+      <style>
+        body{font-family:Arial,sans-serif;color:#17211d;padding:32px;line-height:1.45}h1{margin:0 0 8px;color:#087f5b}p{color:#52615a;margin:0 0 24px}
+        table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #d6dfda;padding:10px;text-align:left;overflow-wrap:anywhere}th{background:#e9f5ef;color:#145b43}
+        tr:nth-child(even) td{background:#f7faf8}.foot{margin-top:24px;font-size:10px;color:#66756d}@media print{body{padding:0}button{display:none}}
+      </style></head><body><h1>${escapeHtml(title)}</h1><p>ChemScope · PubChem compound report · Generated ${escapeHtml(new Date().toLocaleString())}</p>
+      <table>${tableRows}</table><div class="foot">Values are based on the compound data currently displayed in ChemScope.</div>
+      <script>window.onload=()=>window.print();</script></body></html>`);
+    printWindow.document.close();
+  }
+
+  function exportCompoundReport(format) {
+    if (!compound) return;
+    const rows = [
+      ["Property", "Value"],
+      ["Compound name", query || compound.IUPACName],
+      ["PubChem CID", compound.CID],
+      ["Molecular formula", compound.MolecularFormula],
+      ["Molecular weight (g/mol)", compound.MolecularWeight],
+      ["XLogP", compound.XLogP],
+      ["Topological polar surface area (Å²)", compound.TPSA],
+      ["Hydrogen-bond donors", compound.HBondDonorCount],
+      ["Hydrogen-bond acceptors", compound.HBondAcceptorCount],
+      ["Rotatable bonds", compound.RotatableBondCount],
+      ["Canonical SMILES", compound.CanonicalSMILES || compound.ConnectivitySMILES],
+    ];
+    const filename = `${(query || "compound").replace(/[^a-z0-9_-]+/gi, "_")}_report`;
+    if (format === "csv") downloadCsv(`${filename}.csv`, rows);
+    else printPdfReport(`${query || "Compound"} Analysis Report`, rows);
+  }
+
+  function exportComparisonReport(format) {
+    if (!compareA || !compareB) return;
+    const rows = [
+      ["Property", compareNameA || "Compound A", compareNameB || "Compound B"],
+      ["PubChem CID", compareA.CID, compareB.CID],
+      ["Molecular formula", compareA.MolecularFormula, compareB.MolecularFormula],
+      ["Molecular weight (g/mol)", compareA.MolecularWeight, compareB.MolecularWeight],
+      ["XLogP", compareA.XLogP, compareB.XLogP],
+      ["Polar surface area (Å²)", compareA.TPSA, compareB.TPSA],
+      ["Hydrogen-bond donors", compareA.HBondDonorCount, compareB.HBondDonorCount],
+      ["Hydrogen-bond acceptors", compareA.HBondAcceptorCount, compareB.HBondAcceptorCount],
+      ["Rotatable bonds", compareA.RotatableBondCount, compareB.RotatableBondCount],
+    ];
+    if (format === "csv") downloadCsv("chemscope_comparison.csv", rows);
+    else printPdfReport("ChemScope Compound Comparison Report", rows);
+  }
+
   const shownCompounds =
-    activeTab === "Favorites" ? favorites : recent;
+    activeTab === "Favorites"
+      ? favorites
+      : activeTab === "Recommended"
+        ? starterCompounds
+        : recent;
 
   const galleryTitle =
     activeTab === "Favorites"
@@ -325,7 +589,7 @@ function App() {
           href="#"
           onClick={(event) => {
             event.preventDefault();
-            setActiveTab("Discover");
+            navigateTo("Discover");
           }}
         >
           <span className="brand-symbol">⌬</span>
@@ -334,31 +598,41 @@ function App() {
 
         <nav className="navigation">
           <button
-            onClick={() => {
-              setCompound(null);
-              setQuery("");
-              setShowSuggestions(false);
-              setError("");
-              setActiveTab("Discover");
-            }}
+            className={activeTab === "Discover" && !compareMode ? "active" : ""}
+            onClick={() => navigateTo("Discover")}
           >
             <span>⊕</span> New Study
           </button>
 
-          <button onClick={() => setActiveTab("Recommended")}>
+          <button
+            className={activeTab === "Recommended" ? "active" : ""}
+            onClick={() => navigateTo("Recommended")}
+          >
             <span>♧</span> Recommended
           </button>
-
+          <button
+            className={compareMode ? "active" : ""}
+            onClick={() => {
+              setCompareMode(true);
+              setActiveTab("Discover");
+              setCompareError("");
+              setShowCompareSuggestionsA(false);
+              setShowCompareSuggestionsB(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            <span>⇄</span> Compare
+          </button>
           <button
             className={activeTab === "Favorites" ? "active" : ""}
-            onClick={() => setActiveTab("Favorites")}
+            onClick={() => navigateTo("Favorites")}
           >
             <span>☆</span> Favorites
           </button>
 
           <button
             className={activeTab === "Discover" ? "active" : ""}
-            onClick={() => setActiveTab("Discover")}
+            onClick={() => navigateTo("Discover")}
           >
             <span>⌕</span> Discover
           </button>
@@ -374,7 +648,10 @@ function App() {
         </div>
       </header>
 
-      <section className="workspace">
+      <section
+        className="workspace"
+        style={{ display: compareMode ? "none" : undefined }}
+      >
         {/* Keep the orb empty so only the two existing CSS rings appear. */}
         <div className="molecule-orb" />
 
@@ -596,6 +873,12 @@ function App() {
           <div className="section-heading">
             <span>♧</span> Molecular profile
           </div>
+          {compound && (
+            <div className="report-actions" style={{ display: "flex", flexWrap: "wrap", gap: "8px", margin: "12px 0 18px" }}>
+              <button type="button" className="outline-button" onClick={() => exportCompoundReport("csv")}>↓ Export CSV</button>
+              <button type="button" className="outline-button" onClick={() => exportCompoundReport("pdf")}>↓ Export PDF</button>
+            </div>
+          )}
 
 
           <div className="radar-wrap">
@@ -656,6 +939,7 @@ function App() {
             </svg>
           </div>
 
+
           <div className="property-columns">
             <div>
               <h3><span>⚗</span> Physicochemical</h3>
@@ -663,80 +947,271 @@ function App() {
               <div className="data-row">
                 <span>Formula</span>
                 <strong>{selected?.formula || "—"}</strong>
-
-                <div className="data-row">
-                  <span>Molar mass</span>
-                  <strong>{selected?.mass || "—"}</strong>
-                </div>
-
-                <div className="data-row">
-                  <span>XLogP</span>
-                  <strong>{formatProperty(compound?.XLogP)}</strong>
-                </div>
-
-                <div className="data-row">
-                  <span>Polar surface area</span>
-                  <strong>
-                    {formatProperty(compound?.TPSA)} Å²
-                  </strong>
-                </div>
-
-                <div className="data-row">
-                  <span>H-bond donors</span>
-                  <strong>
-                    {formatProperty(compound?.HBondDonorCount, 0)}
-                  </strong>
-                </div>
-
-                <div className="data-row">
-                  <span>H-bond acceptors</span>
-                  <strong>
-                    {formatProperty(compound?.HBondAcceptorCount, 0)}
-                  </strong>
-                </div>
-
-                <div className="data-row">
-                  <span>Rotatable bonds</span>
-                  <strong>
-                    {formatProperty(compound?.RotatableBondCount, 0)}
-                  </strong>
-                </div>
-
-                <div className="data-row">
-                  <span>SMILES</span>
-                  <strong>
-                    {compound?.CanonicalSMILES ||
-                      compound?.ConnectivitySMILES
-                      ? "Available"
-                      : "—"}
-                  </strong>
-                </div>
               </div>
 
-              <div>
-                <h3><span>ⓘ</span> Compound details</h3>
+              <div className="data-row">
+                <span>Molar mass</span>
+                <strong>{selected?.mass || "—"}</strong>
+              </div>
 
-                <div className="data-row">
-                  <span>PubChem CID</span>
-                  <strong>{selected?.cid || "—"}</strong>
-                </div>
+              <div className="data-row">
+                <span>XLogP</span>
+                <strong>{formatProperty(compound?.XLogP)}</strong>
+              </div>
 
-                <div className="data-row">
-                  <span>Source</span>
-                  <strong>PubChem</strong>
-                </div>
+              <div className="data-row">
+                <span>Polar surface area</span>
+                <strong>{formatProperty(compound?.TPSA)} Å²</strong>
+              </div>
 
-                <div className="data-row">
-                  <span>View</span>
-                  <strong>{view}</strong>
-                </div>
+              <div className="data-row">
+                <span>H-bond donors</span>
+                <strong>{formatProperty(compound?.HBondDonorCount, 0)}</strong>
+              </div>
+
+              <div className="data-row">
+                <span>H-bond acceptors</span>
+                <strong>{formatProperty(compound?.HBondAcceptorCount, 0)}</strong>
+              </div>
+
+              <div className="data-row">
+                <span>Rotatable bonds</span>
+                <strong>{formatProperty(compound?.RotatableBondCount, 0)}</strong>
+              </div>
+
+              <div className="data-row">
+                <span>SMILES</span>
+                <strong>
+                  {compound?.CanonicalSMILES || compound?.ConnectivitySMILES
+                    ? "Available"
+                    : "—"}
+                </strong>
+              </div>
+            </div>
+
+            <div>
+              <h3><span>ⓘ</span> Compound details</h3>
+
+              <div className="data-row">
+                <span>PubChem CID</span>
+                <strong>{selected?.cid || "—"}</strong>
+              </div>
+
+              <div className="data-row">
+                <span>Source</span>
+                <strong>PubChem</strong>
+              </div>
+
+              <div className="data-row">
+                <span>View</span>
+                <strong>{view}</strong>
               </div>
             </div>
           </div>
+
         </aside>
       </section>
 
-      <section className="discoveries glass-panel">
+      {compareMode && (
+        <section className="compare-panel glass-panel">
+          <div className="compare-header">
+            <div>
+              <p className="panel-caption">PUBCHEM ANALYSIS</p>
+              <h1>Compound Comparison</h1>
+              <p>Compare molecular properties side by side.</p>
+            </div>
+
+            <button
+              className="outline-button"
+              onClick={() => navigateTo("Discover")}
+            >
+              ← Back to Discover
+            </button>
+          </div>
+
+          <form
+            className="compare-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              compareCompounds(compareNameA, compareNameB);
+            }}
+          >
+            <label>
+              Compound A
+              <input
+                value={compareNameA}
+                onFocus={() => {
+                  if (compareSuggestionsA.length) {
+                    setShowCompareSuggestionsA(true);
+                  }
+                }}
+                onChange={(event) => {
+                  setCompareNameA(event.target.value);
+                  setCompareA(null);
+                  setCompareError("");
+                  setShowCompareSuggestionsA(true);
+                }}
+                placeholder="e.g. Caffeine"
+              />
+
+              {loadingSuggestionsA && (
+                <p className="suggestion-status">Finding compounds...</p>
+              )}
+
+              {showCompareSuggestionsA && compareSuggestionsA.length > 0 && (
+                <div className="compare-suggestions">
+                  {compareSuggestionsA.map((item, index) => {
+                    const name = typeof item === "string" ? item : item.name;
+
+                    return (
+                      <button
+                        type="button"
+                        key={`${name}-${index}`}
+                        onClick={() => {
+                          setCompareNameA(name);
+                          setShowCompareSuggestionsA(false);
+                          setCompareSuggestionsA([]);
+                          setCompareA(null);
+                          setCompareError("");
+                        }}
+                      >
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </label>
+
+            <div className="compare-symbol">⇄</div>
+
+            <label>
+              Compound B
+              <input
+                value={compareNameB}
+                onFocus={() => {
+                  if (compareSuggestionsB.length) {
+                    setShowCompareSuggestionsB(true);
+                  }
+                }}
+                onChange={(event) => {
+                  setCompareNameB(event.target.value);
+                  setCompareB(null);
+                  setCompareError("");
+                  setShowCompareSuggestionsB(true);
+                }}
+                placeholder="e.g. Aspirin"
+              />
+
+              {loadingSuggestionsB && (
+                <p className="suggestion-status">Finding compounds...</p>
+              )}
+
+              {showCompareSuggestionsB && compareSuggestionsB.length > 0 && (
+                <div className="compare-suggestions">
+                  {compareSuggestionsB.map((item, index) => {
+                    const name = typeof item === "string" ? item : item.name;
+
+                    return (
+                      <button
+                        type="button"
+                        key={`${name}-${index}`}
+                        onClick={() => {
+                          setCompareNameB(name);
+                          setShowCompareSuggestionsB(false);
+                          setCompareSuggestionsB([]);
+                          setCompareB(null);
+                          setCompareError("");
+                        }}
+                      >
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </label>
+
+            <button type="submit" disabled={compareLoading}>
+              {compareLoading ? "Comparing..." : "Compare compounds"}
+            </button>
+          </form>
+
+          {compareError && (
+            <p className="error-message">{compareError}</p>
+          )}
+
+          {compareLoading && (
+            <p className="chart-note">Fetching compound data from PubChem...</p>
+          )}
+
+          {compareA && compareB && (
+            <>
+              <div className="report-actions comparison-report-actions" style={{ display: "flex", flexWrap: "wrap", gap: "8px", margin: "18px 0" }}>
+                <button type="button" className="outline-button" onClick={() => exportComparisonReport("csv")}>↓ Export comparison CSV</button>
+                <button type="button" className="outline-button" onClick={() => exportComparisonReport("pdf")}>↓ Export comparison PDF</button>
+              </div>
+              <div className="comparison-results">
+                <div className="comparison-compounds">
+                  {[compareA, compareB].map((item) => (
+                    <div className="comparison-compound" key={item.CID}>
+                      <img
+                        src={structureUrl(item.CID)}
+                        alt={`${item.IUPACName || "Compound"} structure`}
+                      />
+                      <h2>{item.IUPACName || `Compound ${item.CID}`}</h2>
+                      <p>{item.MolecularFormula}</p>
+                      <span>CID: {item.CID}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="comparison-table-wrap">
+                  <table className="comparison-table">
+                    <thead>
+                      <tr>
+                        <th>Property</th>
+                        <th>{compareA.IUPACName || "Compound A"}</th>
+                        <th>{compareB.IUPACName || "Compound B"}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ["Molecular formula", "MolecularFormula", ""],
+                        ["Molecular weight (g/mol)", "MolecularWeight", "number"],
+                        ["XLogP", "XLogP", "number"],
+                        ["Polar surface area (Å²)", "TPSA", "number"],
+                        ["Hydrogen-bond donors", "HBondDonorCount", "number"],
+                        ["Hydrogen-bond acceptors", "HBondAcceptorCount", "number"],
+                        ["Rotatable bonds", "RotatableBondCount", "number"],
+                      ].map(([label, key, type]) => (
+                        <tr key={key}>
+                          <td>{label}</td>
+                          <td>
+                            {type === "number"
+                              ? formatProperty(compareA[key])
+                              : compareA[key] ?? "—"}
+                          </td>
+                          <td>
+                            {type === "number"
+                              ? formatProperty(compareB[key])
+                              : compareB[key] ?? "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+      )}
+
+      <section
+        className="discoveries glass-panel"
+        style={{ display: compareMode ? "none" : undefined }}
+      >
         <div className="gallery-intro">
           <h2>◷ {galleryTitle}</h2>
 

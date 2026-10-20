@@ -1151,3 +1151,249 @@ a:focus-visible {
   font-size: 13px;
   line-height: 1.7;
 }
+
+/* Compound comparison */
+
+.compare-panel {
+  margin: 30px 3%;
+  padding: 30px;
+  border-radius: 20px;
+  min-height: 420px;
+  box-sizing: border-box;
+}
+
+.compare-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.compare-header h1 {
+  margin: 8px 0;
+  font-size: clamp(24px, 3vw, 36px);
+}
+
+.compare-header p {
+  color: #9daaa7;
+}
+
+.compare-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 18px;
+  align-items: end;
+  margin-bottom: 24px;
+}
+
+.compare-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #b8c9c3;
+  font-size: 13px;
+}
+
+.compare-form input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 13px;
+  border: 1px solid #344b43;
+  border-radius: 10px;
+  background: #101916;
+  color: #f0f5f2;
+  font: inherit;
+}
+
+.compare-form button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 12px 20px;
+  border: 1px solid #54d6a1;
+  border-radius: 10px;
+  background: #174b39;
+  color: #eafff4;
+  cursor: pointer;
+}
+
+.compare-form button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.compare-symbol {
+  color: #65e5b2;
+  font-size: 26px;
+  padding-bottom: 8px;
+}
+
+.comparison-compounds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin: 30px 0;
+}
+
+.comparison-compound {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #2b4239;
+  border-radius: 14px;
+  text-align: center;
+  background: rgba(15, 30, 24, 0.65);
+}
+
+.comparison-compound img {
+  width: 100%;
+  max-width: 240px;
+  height: 150px;
+  object-fit: contain;
+  background: white;
+  border-radius: 10px;
+}
+
+.comparison-compound h2 {
+  overflow-wrap: anywhere;
+  font-size: 16px;
+}
+
+.comparison-compound p,
+.comparison-compound span {
+  color: #9daaa7;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.comparison-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 15px 12px;
+  border-bottom: 1px solid #293b34;
+  overflow-wrap: anywhere;
+}
+
+.comparison-table th {
+  color: #65e5b2;
+  font-size: 13px;
+}
+
+.comparison-table td {
+  color: #d5dfda;
+  font-size: 14px;
+}
+
+.comparison-table td:first-child {
+  color: #9daaa7;
+}
+
+@media (max-width: 650px) {
+  .compare-panel {
+    margin: 18px 12px;
+    padding: 18px;
+  }
+
+  .compare-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .compare-symbol {
+    display: none;
+  }
+
+  .comparison-compounds {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .compare-form button {
+    grid-column: 1;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 11px 8px;
+    font-size: 12px;
+  }
+}
+
+.compare-form label {
+  position: relative;
+  min-width: 0;
+}
+
+.compare-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid rgba(80, 220, 170, 0.25);
+  border-radius: 12px;
+  background: #101b19;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.compare-suggestions button {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #e5f5ef;
+  text-align: left;
+  cursor: pointer;
+}
+
+.compare-suggestions button:hover {
+  background: rgba(80, 220, 170, 0.12);
+}
+
+.suggestion-status {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 101;
+  margin: 0;
+  padding: 6px 0;
+  color: #91b8aa;
+  font-size: 12px;
+}
+
+.compare-suggestions button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #e5f5ef;
+  text-align: left;
+  cursor: pointer;
+}
+
+.compare-suggestions button:hover {
+  background: rgba(80, 220, 170, 0.12);
+}
+
+.suggestion-status {
+  margin: 6px 0;
+  color: #91b8aa;
+  font-size: 12px;
+}
