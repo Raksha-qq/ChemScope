@@ -1,3 +1,4 @@
+
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
 import httpx
@@ -8,13 +9,18 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://chemscope-frontend.vercel.app",
+    ],
     allow_credentials=False,
     allow_methods=["GET"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 def home():
@@ -27,6 +33,8 @@ def health_check():
         "status": "healthy",
         "application": "ChemScope"
     }
+
+
 @app.get("/api/search/{query}")
 async def search_compounds(query: str):
     query = query.strip()
@@ -113,7 +121,7 @@ async def get_compound(name: str):
 
         properties = data["PropertyTable"]["Properties"][0]
 
-        # Preserve your existing SMILES field.
+        # Preserve the existing SMILES field for the frontend.
         properties["CanonicalSMILES"] = properties.get(
             "ConnectivitySMILES"
         )
